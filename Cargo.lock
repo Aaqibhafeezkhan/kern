@@ -189,6 +189,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
+name = "kern"
+version = "0.1.1"
+dependencies = [
+ "crossterm",
+ "syntect",
+ "unicode-width",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.191"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -554,15 +563,6 @@ dependencies = [
  "thiserror",
  "walkdir",
  "yaml-rust",
-]
-
-[[package]]
-name = "termcode"
-version = "0.1.1"
-dependencies = [
- "crossterm",
- "syntect",
- "unicode-width",
 ]
 
 [[package]]
