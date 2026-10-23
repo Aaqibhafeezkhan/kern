@@ -1,0 +1,11 @@
+[package]
+name = "termcode"
+version = "0.1.1"
+edition = "2024"
+description = "A terminal based text editor"
+license = "MIT"
+
+[dependencies]
+crossterm = "0.29.0"
+syntect = "5.3.0"
+unicode-width = "0.2.2"
