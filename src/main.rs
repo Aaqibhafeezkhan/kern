@@ -33,11 +33,18 @@ fn read_file(path: &str) -> std::io::Result<String> {
     std::fs::read_to_string(path)
 }
 
+/// Builds the editor for an existing file, with the cursor at the end of the document.
+fn editor_for_file(contents: &str) -> Editor {
+    let mut editor = Editor::from_text(contents);
+    editor.move_cursor_to_end();
+    editor
+}
+
 fn main() -> ExitCode {
     match parse_args(env::args()) {
         Ok(cli) => match read_file(&cli.file_path) {
             Ok(contents) => {
-                let editor = Editor::from_text(&contents);
+                let editor = editor_for_file(&contents);
 
                 match terminal_editor::run(editor, cli.file_path.clone()) {
                     Ok(()) => ExitCode::SUCCESS,
@@ -126,6 +133,18 @@ mod tests {
         let result = read_file(path.to_str().unwrap());
 
         assert_eq!(result.unwrap(), expected);
+
+        fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn opened_file_starts_with_cursor_at_end() {
+        let path = temp_file_path();
+        fs::write(&path, "fn main() {\n    println!(\"hi\");\n}").unwrap();
+
+        let editor = editor_for_file(&read_file(path.to_str().unwrap()).unwrap());
+
+        assert_eq!(editor.cursor, editor::Cursor { row: 2, col: 1 });
 
         fs::remove_file(path).unwrap();
     }

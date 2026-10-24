@@ -30,6 +30,14 @@ impl Editor {
         }
     }
 
+    /// Places the cursor after the last character of the last line, so an
+    /// opened document can be appended to straight away.
+    pub fn move_cursor_to_end(&mut self) {
+        let row = self.lines.len().saturating_sub(1);
+        let col = self.lines.get(row).map_or(0, |line| line.chars().count());
+        self.cursor = Cursor { row, col };
+    }
+
     fn validate_cursor(&self) -> Result<(), EditorError> {
         let Some(line) = self.lines.get(self.cursor.row) else {
             return Err(EditorError::InvalidCursorPosition {
@@ -171,6 +179,48 @@ mod editor {
         );
 
         assert_eq!(editor.cursor, Cursor { row: 0, col: 0 });
+    }
+
+    #[test]
+    fn moves_cursor_to_end_of_multiple_lines() {
+        let mut editor = Editor::from_text("first\nsecond line");
+
+        editor.move_cursor_to_end();
+
+        assert_eq!(editor.cursor, Cursor { row: 1, col: 11 });
+        assert_eq!(editor.insert_char('!'), Ok(()));
+        assert_eq!(editor.lines[1], "second line!");
+    }
+
+    #[test]
+    fn moves_cursor_to_end_after_trailing_newline() {
+        let mut editor = Editor::from_text("first\r\nsecond\r\n");
+
+        editor.move_cursor_to_end();
+
+        assert_eq!(editor.cursor, Cursor { row: 2, col: 0 });
+    }
+
+    #[test]
+    fn moves_cursor_to_end_counting_characters_not_bytes() {
+        let mut editor = Editor::from_text("a🦀é");
+
+        editor.move_cursor_to_end();
+
+        assert_eq!(editor.cursor, Cursor { row: 0, col: 3 });
+        assert_eq!(editor.delete_char(), Ok(()));
+        assert_eq!(editor.lines[0], "a🦀");
+    }
+
+    #[test]
+    fn moves_cursor_to_end_of_empty_text() {
+        let mut editor = Editor::from_text("");
+
+        editor.move_cursor_to_end();
+
+        assert_eq!(editor.cursor, Cursor { row: 0, col: 0 });
+        assert_eq!(editor.insert_char('x'), Ok(()));
+        assert_eq!(editor.lines, vec!["x".to_string()]);
     }
 
     #[test]
