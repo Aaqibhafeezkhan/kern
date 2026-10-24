@@ -5,6 +5,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      release-tag:
+        description: "Release Tag, e.g. v1.0.0"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -81,6 +87,11 @@ jobs:
       contents: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with: 
+          fetch-depth: 0
+
       - name: Download release artifacts
         uses: actions/download-artifact@v5
         with:
@@ -91,7 +102,7 @@ jobs:
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.release-tag || github.ref_name }}
         run: |
           gh release create "$TAG" dist/* \
             --verify-tag \
