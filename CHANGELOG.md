@@ -7,20 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
-### Added
-- 
+## [0.1.1] - 2026-10-24
 
 ### Changed
 - When opening a document, the cursor now defaults to the end of the document.
-
-### Fixed
-- 
-
-### Removed
-- 
-
-### Security
-- 
 
 ## [0.1.0] - 2026-10-22
 
