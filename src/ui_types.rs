@@ -1,5 +1,6 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum EditorMode {
+    #[default]
     Writing,
     Saving,
 }
@@ -16,12 +17,6 @@ pub struct UiState {
     pub modified: bool,
     pub target_path: String,
     pub message: Option<String>,
-}
-
-impl Default for EditorMode {
-    fn default() -> Self {
-        Self::Writing
-    }
 }
 
 impl Default for UiState {
