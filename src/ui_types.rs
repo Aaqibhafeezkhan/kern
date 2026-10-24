@@ -1,5 +1,6 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum EditorMode {
+    #[default]
     Writing,
     Saving,
 }
@@ -18,13 +19,14 @@ pub struct UiState {
     pub message: Option<String>,
 }
 
-impl Default for EditorMode {
-    fn default() -> Self { Self::Writing }
-}
-
 impl Default for UiState {
     fn default() -> Self {
-        Self { mode: EditorMode::Writing, modified: false, target_path: String::new(), message: None }
+        Self {
+            mode: EditorMode::Writing,
+            modified: false,
+            target_path: String::new(),
+            message: None,
+        }
     }
 }
 
@@ -39,7 +41,14 @@ pub struct ScreenSize {
 impl ScreenSize {
     pub fn new(width: u16, _height: u16, line_count: usize) -> Self {
         let digits = line_count.max(1).to_string().len() as u16;
-        Self { width, _height, text_rows: _height.saturating_sub(3), gutter_width: digits.saturating_add(3) }
+        Self {
+            width,
+            _height,
+            text_rows: _height.saturating_sub(3),
+            gutter_width: digits.saturating_add(3),
+        }
     }
-    pub fn text_width(self) -> usize { self.width.saturating_sub(self.gutter_width) as usize }
+    pub fn text_width(self) -> usize {
+        self.width.saturating_sub(self.gutter_width) as usize
+    }
 }

@@ -138,7 +138,7 @@ impl Editor {
 }
 
 #[cfg(test)]
-mod editor {
+mod tests {
     use super::*;
 
     #[test]

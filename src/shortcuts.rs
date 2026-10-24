@@ -1,5 +1,5 @@
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crate::ui_types::EditorMode;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 /// Semantic actions keep key bindings separate from editing and rendering.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -33,20 +33,75 @@ struct Shortcut {
 }
 
 const WRITING_SHORTCUTS: &[Shortcut] = &[
-    Shortcut { binding: KeyBinding::Control('x'), action: Action::Quit, hint_key: "^X", hint_label: "Quit" },
-    Shortcut { binding: KeyBinding::Control('o'), action: Action::BeginSave, hint_key: "^O", hint_label: "Save As" },
-    Shortcut { binding: KeyBinding::Key(KeyCode::Left), action: Action::MoveLeft, hint_key: "←", hint_label: "Left" },
-    Shortcut { binding: KeyBinding::Key(KeyCode::Right), action: Action::MoveRight, hint_key: "→", hint_label: "Right" },
-    Shortcut { binding: KeyBinding::Key(KeyCode::Up), action: Action::MoveUp, hint_key: "↑", hint_label: "Up" },
-    Shortcut { binding: KeyBinding::Key(KeyCode::Down), action: Action::MoveDown, hint_key: "↓", hint_label: "Down" },
-    Shortcut { binding: KeyBinding::Key(KeyCode::Backspace), action: Action::Backspace, hint_key: "Backspace", hint_label: "Delete" },
-    Shortcut { binding: KeyBinding::Key(KeyCode::Enter), action: Action::Enter, hint_key: "Enter", hint_label: "New line" },
+    Shortcut {
+        binding: KeyBinding::Control('x'),
+        action: Action::Quit,
+        hint_key: "^X",
+        hint_label: "Quit",
+    },
+    Shortcut {
+        binding: KeyBinding::Control('o'),
+        action: Action::BeginSave,
+        hint_key: "^O",
+        hint_label: "Save As",
+    },
+    Shortcut {
+        binding: KeyBinding::Key(KeyCode::Left),
+        action: Action::MoveLeft,
+        hint_key: "←",
+        hint_label: "Left",
+    },
+    Shortcut {
+        binding: KeyBinding::Key(KeyCode::Right),
+        action: Action::MoveRight,
+        hint_key: "→",
+        hint_label: "Right",
+    },
+    Shortcut {
+        binding: KeyBinding::Key(KeyCode::Up),
+        action: Action::MoveUp,
+        hint_key: "↑",
+        hint_label: "Up",
+    },
+    Shortcut {
+        binding: KeyBinding::Key(KeyCode::Down),
+        action: Action::MoveDown,
+        hint_key: "↓",
+        hint_label: "Down",
+    },
+    Shortcut {
+        binding: KeyBinding::Key(KeyCode::Backspace),
+        action: Action::Backspace,
+        hint_key: "Backspace",
+        hint_label: "Delete",
+    },
+    Shortcut {
+        binding: KeyBinding::Key(KeyCode::Enter),
+        action: Action::Enter,
+        hint_key: "Enter",
+        hint_label: "New line",
+    },
 ];
 
 const SAVING_SHORTCUTS: &[Shortcut] = &[
-    Shortcut { binding: KeyBinding::Key(KeyCode::Enter), action: Action::Save, hint_key: "Enter", hint_label: "Save" },
-    Shortcut { binding: KeyBinding::Control('c'), action: Action::CancelSave, hint_key: "^C", hint_label: "Cancel" },
-    Shortcut { binding: KeyBinding::Key(KeyCode::Backspace), action: Action::Backspace, hint_key: "Backspace", hint_label: "Delete" },
+    Shortcut {
+        binding: KeyBinding::Key(KeyCode::Enter),
+        action: Action::Save,
+        hint_key: "Enter",
+        hint_label: "Save",
+    },
+    Shortcut {
+        binding: KeyBinding::Control('c'),
+        action: Action::CancelSave,
+        hint_key: "^C",
+        hint_label: "Cancel",
+    },
+    Shortcut {
+        binding: KeyBinding::Key(KeyCode::Backspace),
+        action: Action::Backspace,
+        hint_key: "Backspace",
+        hint_label: "Delete",
+    },
 ];
 
 fn shortcuts_for(mode: EditorMode) -> &'static [Shortcut] {
@@ -64,7 +119,8 @@ pub fn resolve_key(key: KeyEvent, mode: EditorMode) -> Action {
                     && matches!(key.code, KeyCode::Char(c) if c.eq_ignore_ascii_case(&ch))
             }
             KeyBinding::Key(code) => {
-                !key.modifiers.intersects(KeyModifiers::CONTROL | KeyModifiers::ALT)
+                !key.modifiers
+                    .intersects(KeyModifiers::CONTROL | KeyModifiers::ALT)
                     && key.code == code
             }
         };
@@ -74,11 +130,14 @@ pub fn resolve_key(key: KeyEvent, mode: EditorMode) -> Action {
     }
 
     // Ordinary character input is the default action in both modes.
-    if !key.modifiers.intersects(KeyModifiers::CONTROL | KeyModifiers::ALT) {
+    if !key
+        .modifiers
+        .intersects(KeyModifiers::CONTROL | KeyModifiers::ALT)
+    {
         if let KeyCode::Char(ch) = key.code {
             return Action::Insert(ch);
         } else if let KeyCode::Tab = key.code {
-            return Action::Insert('\t')
+            return Action::Insert('\t');
         }
     }
     Action::Ignore
@@ -89,7 +148,17 @@ pub fn resolve_key(key: KeyEvent, mode: EditorMode) -> Action {
 pub fn shortcut_line(mode: EditorMode) -> String {
     shortcuts_for(mode)
         .iter()
-        .filter(|shortcut| !matches!(shortcut.action, Action::MoveLeft | Action::MoveRight | Action::MoveUp | Action::MoveDown | Action::Backspace | Action::Enter))
+        .filter(|shortcut| {
+            !matches!(
+                shortcut.action,
+                Action::MoveLeft
+                    | Action::MoveRight
+                    | Action::MoveUp
+                    | Action::MoveDown
+                    | Action::Backspace
+                    | Action::Enter
+            )
+        })
         .map(|shortcut| format!("{} {}", shortcut.hint_key, shortcut.hint_label))
         .collect::<Vec<_>>()
         .join("    ")
