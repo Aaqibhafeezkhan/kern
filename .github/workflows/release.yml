@@ -81,6 +81,11 @@ jobs:
       contents: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with: 
+          fetch-depth: 0
+
       - name: Download release artifacts
         uses: actions/download-artifact@v5
         with:
