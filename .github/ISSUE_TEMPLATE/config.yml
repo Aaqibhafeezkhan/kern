@@ -1,0 +1,10 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Questions and General Discussion
+    url: https://github.com/dominikgobel/kern/discussions
+    about: Please use Discussions for questions, ideas, and general feedback instead of opening an issue.
+
+  - name: Security Vulnerabilities
+    url: https://github.com/dominikgobel/kern/security/advisories/new
+    about: Please report security vulnerabilities privately.
