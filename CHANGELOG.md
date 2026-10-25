@@ -8,7 +8,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added
-- Alongside with `clap`, a help command (`kern -h` or `kern --help`) and a version command (`kern -V` or `kern --version`) were introduced.
+- A help command (`kern -h` or `kern --help`) and a version command (`kern -V` or `kern --version`) were introduced.
+- An update command (`kern update`) was introduced to enhance user experience and reduce the effort regarding maintenance. It also features a `--check` flag to just check for updates without installing them.
 
 ### Changed
 - The command line interface (CLI) now uses `clap` as its argument parser.
