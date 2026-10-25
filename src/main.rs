@@ -1,8 +1,11 @@
-use std::env;
+use clap::Parser;
+use std::path::PathBuf;
 use std::process::ExitCode;
 
+use crate::cli::Cli;
 use crate::editor::Editor;
 
+mod cli;
 mod editor;
 mod file;
 mod shortcuts;
@@ -10,26 +13,7 @@ mod syntax_cache;
 mod terminal_editor;
 mod ui_types;
 
-struct Cli {
-    file_path: String,
-}
-
-fn parse_args(args: impl Iterator<Item = String>) -> Result<Cli, String> {
-    let mut args = args;
-    let program = args.next().unwrap_or_else(|| "termcode".to_string());
-
-    let Some(file_path) = args.next() else {
-        return Err(format!("Usage: {program} <file>"));
-    };
-
-    if args.next().is_some() {
-        return Err(format!("Usage: {program} <file>"));
-    }
-
-    Ok(Cli { file_path })
-}
-
-fn read_file(path: &str) -> std::io::Result<String> {
+fn read_file(path: &PathBuf) -> std::io::Result<String> {
     std::fs::read_to_string(path)
 }
 
@@ -41,32 +25,16 @@ fn editor_for_file(contents: &str) -> Editor {
 }
 
 fn main() -> ExitCode {
-    match parse_args(env::args()) {
-        Ok(cli) => match read_file(&cli.file_path) {
-            Ok(contents) => {
-                let editor = editor_for_file(&contents);
+    let cli = Cli::parse();
 
-                match terminal_editor::run(editor, cli.file_path.clone()) {
-                    Ok(()) => ExitCode::SUCCESS,
-                    Err(error) => {
-                        eprintln!("Terminal error: {error}");
-                        ExitCode::FAILURE
-                    }
-                }
-            }
-            Err(_) => {
-                let editor = Editor::from_text("");
-                match terminal_editor::run(editor, cli.file_path.clone()) {
-                    Ok(()) => ExitCode::SUCCESS,
-                    Err(error) => {
-                        eprintln!("Terminal error: {error}");
-                        ExitCode::FAILURE
-                    }
-                }
-            }
-        },
-        Err(message) => {
-            eprintln!("{message}");
+    let contents = read_file(&cli.path).unwrap_or_default();
+
+    let editor = editor_for_file(&contents);
+
+    match terminal_editor::run(editor, cli.path) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            eprintln!("Terminal error: {error}");
             ExitCode::FAILURE
         }
     }
@@ -75,50 +43,61 @@ fn main() -> ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use clap::Parser;
     use std::fs;
+    use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
 
-    fn temp_file_path() -> std::path::PathBuf {
+    fn temp_file_path() -> PathBuf {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
 
-        std::env::temp_dir().join(format!(
-            "termcode-test-{}-{timestamp}.txt",
-            std::process::id()
-        ))
-    }
-
-    fn args<'a>(values: &'a [&str]) -> impl Iterator<Item = String> + 'a {
-        values.iter().map(|value| (*value).to_string())
+        std::env::temp_dir().join(format!("kern-test-{}-{timestamp}.txt", std::process::id()))
     }
 
     #[test]
     fn accepts_a_file_path() {
-        let cli = parse_args(args(&["termcode", "example.txt"])).unwrap();
+        let cli = Cli::try_parse_from(["kern", "example.txt"]).unwrap();
 
-        assert_eq!(cli.file_path, "example.txt");
+        assert_eq!(cli.path, PathBuf::from("example.txt"));
     }
 
     #[test]
     fn rejects_missing_file_path() {
-        let result = parse_args(args(&["termcode"]));
+        let result = Cli::try_parse_from(["kern"]);
 
         assert!(result.is_err());
     }
 
     #[test]
     fn rejects_additional_arguments() {
-        let result = parse_args(args(&["termcode", "one.txt", "two.txt"]));
+        let result = Cli::try_parse_from(["kern", "one.txt", "two.txt"]);
 
         assert!(result.is_err());
     }
 
     #[test]
+    fn accepts_short_help_flag() {
+        let result = Cli::try_parse_from(["kern", "-h"]);
+
+        let error = result.unwrap_err();
+        assert_eq!(error.kind(), clap::error::ErrorKind::DisplayHelp);
+    }
+
+    #[test]
+    fn accepts_long_help_flag() {
+        let result = Cli::try_parse_from(["kern", "--help"]);
+
+        let error = result.unwrap_err();
+        assert_eq!(error.kind(), clap::error::ErrorKind::DisplayHelp);
+    }
+
+    #[test]
     fn error_no_such_file() {
         let path = temp_file_path();
-        let result = read_file(path.to_str().unwrap());
+        let result = read_file(&path);
 
         assert!(result.is_err());
     }
@@ -126,15 +105,15 @@ mod tests {
     #[test]
     fn reads_file_contents() {
         let path = temp_file_path();
-        let expected = "Hello, termcode!\nHello from the 2nd line!";
+        let expected = "Hello, kern!\nHello from the 2nd line!";
 
         fs::write(&path, expected).unwrap();
 
-        let result = read_file(path.to_str().unwrap());
+        let result = read_file(&path);
 
         assert_eq!(result.unwrap(), expected);
 
-        fs::remove_file(path).unwrap();
+        fs::remove_file(&path).unwrap();
     }
 
     #[test]
@@ -142,10 +121,11 @@ mod tests {
         let path = temp_file_path();
         fs::write(&path, "fn main() {\n    println!(\"hi\");\n}").unwrap();
 
-        let editor = editor_for_file(&read_file(path.to_str().unwrap()).unwrap());
+        let contents = read_file(&path).unwrap();
+        let editor = editor_for_file(&contents);
 
         assert_eq!(editor.cursor, editor::Cursor { row: 2, col: 1 });
 
-        fs::remove_file(path).unwrap();
+        fs::remove_file(&path).unwrap();
     }
 }
