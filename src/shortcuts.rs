@@ -129,18 +129,17 @@ pub fn resolve_key(key: KeyEvent, mode: EditorMode) -> Action {
         }
     }
 
-    // Ordinary character input is the default action in both modes.
-    if !key
-        .modifiers
-        .intersects(KeyModifiers::CONTROL | KeyModifiers::ALT)
-    {
-        if let KeyCode::Char(ch) = key.code {
-            return Action::Insert(ch);
-        } else if let KeyCode::Tab = key.code {
-            return Action::Insert('\t');
-        }
+    // Printable input is the default once no shortcut matched. A bare Ctrl
+    // modifier stays reserved for shortcuts, but characters produced with Alt
+    // or AltGr (reported as Ctrl+Alt on many layouts, e.g. AltGr+8 -> '[' on a
+    // German keyboard) must still reach the editor.
+    let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+    let alt = key.modifiers.contains(KeyModifiers::ALT);
+    match key.code {
+        KeyCode::Char(ch) if alt || !ctrl => Action::Insert(ch),
+        KeyCode::Tab if !ctrl && !alt => Action::Insert('\t'),
+        _ => Action::Ignore,
     }
-    Action::Ignore
 }
 
 /// The footer is generated from the same bindings used by `resolve_key`, so
